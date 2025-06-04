@@ -1,9 +1,15 @@
+using Microsoft.EntityFrameworkCore;
+using WebPortalAPI.Models;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+builder.Services.AddControllers().AddNewtonsoftJson();
+builder.Services.AddDbContext<PmfdatabaseContext>(options =>
+    options.UseSqlServer("Server=DESKTOP-3TL1BCC\\SQLEXPRESS;Database=PMFDatabase;User Id=sa;Password=abcd.1234;TrustServerCertificate=True;"));
 
 var app = builder.Build();
 
@@ -15,6 +21,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+app.MapControllers();
 
 var summaries = new[]
 {
