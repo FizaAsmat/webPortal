@@ -1,25 +1,35 @@
-using Microsoft.AspNetCore.Mvc;
-using WebPortalAPI.Models;  // adjust based on your namespace
-using Microsoft.EntityFrameworkCore;
-
-namespace WebPortalAPI.Controllers
+[ApiController]
+[Route("api/public")]
+public class PublicController : ControllerBase
 {
-    [ApiController]
-    [Route("WebPortalAPI/Controllers")]
-    public class ApplicantsController : ControllerBase
+    private readonly PmfdatabaseContext _context;
+
+    public PublicController(PmfdatabaseContext context)
     {
-        private readonly PmfdatabaseContext _context;
+        _context = context;
+    }
 
-        public ApplicantsController(PmfdatabaseContext context)
-        {
-            _context = context;
-        }
+    [HttpPost("generate-challan")]
+    public IActionResult GenerateChallan([FromBody] ChallanDTO challanDto)
+    {
+        // validate, create new challan
+        // generate PDF
+        return Ok("Challan generated successfully");
+    }
 
-        [HttpGet]
-        public async Task<IActionResult> GetAllApplicants()
-        {
-            var applicants = await _context.Applicants.ToListAsync();
-            return Ok(applicants);
-        }
+    [HttpGet("feetitles")]
+    public IActionResult GetFeeTitles()
+    {
+        var titles = _context.FeeTitles
+            .Select(f => new FeeTitleDTO
+            {
+                Id = f.Id,
+                Title = f.Title,
+                Amount = f.Amount,
+                HasExpiry = f.HasExpiry,
+                ExpiryDate = f.ExpiryDate
+            }).ToList();
+
+        return Ok(titles);
     }
 }

@@ -1,9 +1,7 @@
-namespace WebPortalAPI.DTOs
+public class ApplicantDTO
 {
-    public class ApplicantDto
-    {
-        public string FullName { get; set; }
-        public string CNIC { get; set; }
-        public string MobileNo { get; set; }
-    }
+    public int Id { get; set; }
+    public string ApplicantName { get; set; }
+    public string CNIC { get; set; }
+    public string Mobile { get; set; }
 }

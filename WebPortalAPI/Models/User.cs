@@ -1,15 +1,17 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 
 namespace WebPortalAPI.Models;
 
 public partial class User
 {
-    public int UserId { get; set; }
+[Key]
+        public int UserId { get; set; }
 
-    public string Username { get; set; } = null!;
+        public string Username { get; set; }
 
-    public string PasswordHash { get; set; } = null!;
+        public string Password { get; set; }
 
-    public string Role { get; set; } = null!;
+        public string Role { get; set; } // "Admin", "Bank", or "Public"
 }
