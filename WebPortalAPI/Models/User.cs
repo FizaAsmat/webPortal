@@ -1,17 +1,19 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 
-namespace WebPortalAPI.Models;
-
-public partial class User
+namespace WebPortalAPI.Models
 {
-[Key]
+    public partial class User
+    {
+        [Key]
         public int UserId { get; set; }
 
-        public string Username { get; set; }
+        [Required]
+        public string Username { get; set; } = null!;
 
-        public string Password { get; set; }
+        [Required]
+        public string Password { get; set; } = null!;
 
-        public string Role { get; set; } // "Admin", "Bank", or "Public"
+        [Required]
+        public string Role { get; set; } = null!; // "Admin", "Bank", or "Public"
+    }
 }

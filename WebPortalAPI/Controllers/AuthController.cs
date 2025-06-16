@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
 using WebPortalAPI.DTOs;
 using WebPortalAPI.Helpers;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using WebPortalAPI.Models;
 
 namespace WebPortalAPI.Controllers
