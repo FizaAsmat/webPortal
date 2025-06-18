@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-
+using WebPortalAPI.Services;
 [ApiController]
 [Route("api/bank")]
 [Authorize(Roles = "Bank")]

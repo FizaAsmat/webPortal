@@ -1,10 +1,9 @@
-namespace WebPortalAPI.DTOs;
-
-public class FeeTitleDTO
+namespace WebPortalAPI.DTOs
 {
-    public int FeeTitleId { get; set; }
-    public string Title { get; set; } = null!;
-    public decimal Amount { get; set; }
-    public bool HasExpiry { get; set; }
-    public DateOnly? ExpiryDate { get; set; }
+    public class FeeTitleDTO
+    {
+        public int? FeeTitleId { get; set; } // Nullable for create
+        public string Title { get; set; }
+        public decimal Amount { get; set; }
+    }
 }

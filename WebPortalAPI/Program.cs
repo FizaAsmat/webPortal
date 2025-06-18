@@ -21,8 +21,10 @@ builder.Services.AddDbContext<PmfdatabaseContext>(options =>
     options.UseSqlServer(connectionString));
 
 // Optional: Register custom services
+// After AddDbContext
 builder.Services.AddScoped<FeeTitleService>();
 builder.Services.AddScoped<ChallanService>();
+
 
 // CORS (Adjust origin as needed)
 builder.Services.AddCors(options =>

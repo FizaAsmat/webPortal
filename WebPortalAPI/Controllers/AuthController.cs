@@ -23,8 +23,8 @@ namespace WebPortalAPI.Controllers
         [HttpPost("login")]
         public IActionResult Login([FromBody] LoginDTO loginDto)
         {
-            var user = _context.Users.FirstOrDefault(u => 
-                u.Username == loginDto.Username && 
+            var user = _context.Users.FirstOrDefault(u =>
+                u.Username == loginDto.Username &&
                 u.Password == loginDto.Password);
 
             if (user == null)
@@ -38,5 +38,26 @@ namespace WebPortalAPI.Controllers
                 role = user.Role
             });
         }
+        [HttpPost("register")]
+        [Authorize(Roles = "Admin")]
+        public IActionResult Register([FromBody] RegisterDTO registerDto)
+        {
+            var existingUser = _context.Users.FirstOrDefault(u => u.Username == registerDto.Username);
+            if (existingUser != null)
+                return Conflict("Username already exists.");
+
+            var newUser = new User
+            {
+                Username = registerDto.Username,
+                Password = registerDto.Password,
+                Role = "Bank" // or "Public" — you can modify based on request
+            };
+
+            _context.Users.Add(newUser);
+            _context.SaveChanges();
+
+            return Ok("User registered successfully.");
+        }
+
     }
 }
