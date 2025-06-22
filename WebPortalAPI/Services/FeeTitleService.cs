@@ -23,7 +23,9 @@ public class FeeTitleService
                 Title = f.Title,
                 Amount = f.Amount,
                 HasExpiry = f.HasExpiry,
-                ExpiryDate = f.ExpiryDate
+                ExpiryDate = f.ExpiryDate.HasValue 
+                    ? f.ExpiryDate.Value.ToDateTime(new TimeOnly(0, 0)) 
+                    : (DateTime?)null
             })
             .ToList();
     }
@@ -36,7 +38,9 @@ public class FeeTitleService
             Title = dto.Title,
             Amount = dto.Amount,
             HasExpiry = dto.HasExpiry,
-            ExpiryDate = dto.ExpiryDate
+            ExpiryDate = dto.ExpiryDate.HasValue 
+                ? DateOnly.FromDateTime(dto.ExpiryDate.Value) 
+                : (DateOnly?)null
         };
 
         _context.FeeTitles.Add(entity);
@@ -56,7 +60,9 @@ public class FeeTitleService
         entity.Title = dto.Title;
         entity.Amount = dto.Amount;
         entity.HasExpiry = dto.HasExpiry;
-        entity.ExpiryDate = dto.ExpiryDate;
+        entity.ExpiryDate = dto.ExpiryDate.HasValue 
+            ? DateOnly.FromDateTime(dto.ExpiryDate.Value) 
+            : (DateOnly?)null;
 
         _context.FeeTitles.Update(entity);
         await _context.SaveChangesAsync();
@@ -88,7 +94,10 @@ public class FeeTitleService
             Title = entity.Title,
             Amount = entity.Amount,
             HasExpiry = entity.HasExpiry,
-            ExpiryDate = entity.ExpiryDate
+            ExpiryDate = entity.ExpiryDate.HasValue 
+                ? entity.ExpiryDate.Value.ToDateTime(new TimeOnly(0, 0)) 
+                : (DateTime?)null
+
         };
     }
 }

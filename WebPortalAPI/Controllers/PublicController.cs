@@ -51,7 +51,9 @@ public class PublicController : ControllerBase
                 Title = f.Title,
                 Amount = f.Amount,
                 HasExpiry = f.HasExpiry,
-                ExpiryDate = f.ExpiryDate
+                ExpiryDate = f.ExpiryDate.HasValue 
+                    ? f.ExpiryDate.Value.ToDateTime(new TimeOnly(0, 0)) 
+                    : (DateTime?)null
             }).ToList();
 
         return Ok(titles);
