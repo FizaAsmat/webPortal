@@ -18,23 +18,62 @@ namespace WebPortalAPI.Controllers
         }
 
         // Create
-        [HttpPost("create")]
+        [HttpPost]
         public IActionResult CreateFeeTitle([FromBody] FeeTitleDTO dto)
         {
+            // Validate required fields
+            if (string.IsNullOrWhiteSpace(dto.Title))
+            {
+                return BadRequest("Title is required.");
+            }
+
+            if (dto.Amount <= 0)
+            {
+                return BadRequest("Amount must be greater than 0.");
+            }
+
+            // Validate expiry date if HasExpiry is true
+            if (dto.HasExpiry)
+            {
+                if (!dto.ExpiryDate.HasValue)
+                {
+                    return BadRequest("Expiry date is required when HasExpiry is true.");
+                }
+
+                if (dto.ExpiryDate.Value.Date <= DateTime.Now.Date)
+                {
+                    return BadRequest("Expiry date must be a future date.");
+                }
+            }
+
             var feeTitle = new FeeTitle
             {
                 Title = dto.Title,
-                Amount = dto.Amount
+                Amount = dto.Amount,
+                HasExpiry = dto.HasExpiry,
+                ExpiryDate = dto.HasExpiry && dto.ExpiryDate.HasValue 
+                    ? DateOnly.FromDateTime(dto.ExpiryDate.Value) 
+                    : null
             };
 
             _context.FeeTitles.Add(feeTitle);
             _context.SaveChanges();
 
-            return Ok("Fee Title created successfully.");
+            return Ok(new { 
+                message = "Fee Title created successfully.",
+                data = new FeeTitleDTO
+                {
+                    FeeTitleId = feeTitle.FeeTitleId,
+                    Title = feeTitle.Title,
+                    Amount = feeTitle.Amount,
+                    HasExpiry = feeTitle.HasExpiry,
+                    ExpiryDate = feeTitle.ExpiryDate?.ToDateTime(TimeOnly.MinValue)
+                }
+            });
         }
 
         // Get All
-        [HttpGet("all")]
+        [HttpGet]
         public IActionResult GetAllFeeTitles()
         {
             var feeTitles = _context.FeeTitles
@@ -42,30 +81,75 @@ namespace WebPortalAPI.Controllers
                 {
                     FeeTitleId = ft.FeeTitleId,
                     Title = ft.Title,
-                    Amount = ft.Amount
+                    Amount = ft.Amount,
+                    HasExpiry = ft.HasExpiry,
+                    ExpiryDate = ft.ExpiryDate?.ToDateTime(TimeOnly.MinValue)
                 })
                 .ToList();
 
-            return Ok(feeTitles);
+            return Ok(new { 
+                message = "Fee Titles retrieved successfully.",
+                data = feeTitles 
+            });
         }
 
         // Update
-        [HttpPut("update/{id}")]
+        [HttpPut("{id}")]
         public IActionResult UpdateFeeTitle(int id, [FromBody] FeeTitleDTO dto)
         {
             var feeTitle = _context.FeeTitles.FirstOrDefault(f => f.FeeTitleId == id);
             if (feeTitle == null)
                 return NotFound("Fee Title not found.");
 
+            // Validate required fields
+            if (string.IsNullOrWhiteSpace(dto.Title))
+            {
+                return BadRequest("Title is required.");
+            }
+
+            if (dto.Amount <= 0)
+            {
+                return BadRequest("Amount must be greater than 0.");
+            }
+
+            // Validate expiry date if HasExpiry is true
+            if (dto.HasExpiry)
+            {
+                if (!dto.ExpiryDate.HasValue)
+                {
+                    return BadRequest("Expiry date is required when HasExpiry is true.");
+                }
+
+                if (dto.ExpiryDate.Value.Date <= DateTime.Now.Date)
+                {
+                    return BadRequest("Expiry date must be a future date.");
+                }
+            }
+
             feeTitle.Title = dto.Title;
             feeTitle.Amount = dto.Amount;
+            feeTitle.HasExpiry = dto.HasExpiry;
+            feeTitle.ExpiryDate = dto.HasExpiry && dto.ExpiryDate.HasValue 
+                ? DateOnly.FromDateTime(dto.ExpiryDate.Value) 
+                : null;
+
             _context.SaveChanges();
 
-            return Ok("Fee Title updated successfully.");
+            return Ok(new { 
+                message = "Fee Title updated successfully.",
+                data = new FeeTitleDTO
+                {
+                    FeeTitleId = feeTitle.FeeTitleId,
+                    Title = feeTitle.Title,
+                    Amount = feeTitle.Amount,
+                    HasExpiry = feeTitle.HasExpiry,
+                    ExpiryDate = feeTitle.ExpiryDate?.ToDateTime(TimeOnly.MinValue)
+                }
+            });
         }
 
         // Delete
-        [HttpDelete("delete/{id}")]
+        [HttpDelete("{id}")]
         public IActionResult DeleteFeeTitle(int id)
         {
             var feeTitle = _context.FeeTitles.FirstOrDefault(f => f.FeeTitleId == id);
@@ -75,7 +159,17 @@ namespace WebPortalAPI.Controllers
             _context.FeeTitles.Remove(feeTitle);
             _context.SaveChanges();
 
-            return Ok("Fee Title deleted successfully.");
+            return Ok(new { 
+                message = "Fee Title deleted successfully.",
+                data = new FeeTitleDTO
+                {
+                    FeeTitleId = feeTitle.FeeTitleId,
+                    Title = feeTitle.Title,
+                    Amount = feeTitle.Amount,
+                    HasExpiry = feeTitle.HasExpiry,
+                    ExpiryDate = feeTitle.ExpiryDate?.ToDateTime(TimeOnly.MinValue)
+                }
+            });
         }
     }
 }

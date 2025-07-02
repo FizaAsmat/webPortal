@@ -24,7 +24,8 @@ builder.Services.AddDbContext<PmfdatabaseContext>(options =>
 // After AddDbContext
 builder.Services.AddScoped<FeeTitleService>();
 builder.Services.AddScoped<ChallanService>();
-
+builder.Services.AddScoped<PdfService>();
+builder.Services.AddScoped<AuthService>();
 
 // CORS (Adjust origin as needed)
 builder.Services.AddCors(options =>

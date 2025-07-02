@@ -13,6 +13,19 @@ public class ChallanDTO
     public string? Details { get; set; }
 }
 
+public class GenerateChallanDTO
+{
+    public string ApplicantName { get; set; }
+    public string Cnic { get; set; }
+    public string MobileNo { get; set; }
+    public int FeeTitleId { get; set; }
+    // Re-Checking specific fields (optional)
+    public int? NumberOfSubjects { get; set; }
+    public List<string>? SubjectNames { get; set; }
+    public string? Category { get; set; }
+    public string? RollNo { get; set; }
+}
+
 public class CreateChallanDTO
 {
     public int ApplicantId { get; set; }

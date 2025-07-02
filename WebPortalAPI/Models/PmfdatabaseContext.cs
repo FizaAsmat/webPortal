@@ -18,6 +18,7 @@ namespace WebPortalAPI.Models
         public virtual DbSet<Challan> Challans { get; set; }
         public virtual DbSet<FeeTitle> FeeTitles { get; set; }
         public virtual DbSet<User> Users { get; set; }
+        public virtual DbSet<RefreshToken> RefreshTokens { get; set; }
 
         // NOTE: Move your connection string to appsettings.json in production.
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
@@ -121,6 +122,19 @@ namespace WebPortalAPI.Models
 
                 entity.Property(e => e.Role)
                       .HasMaxLength(50);
+            });
+
+            modelBuilder.Entity<RefreshToken>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Token).IsRequired();
+                entity.Property(e => e.ExpiryDate).IsRequired();
+                entity.Property(e => e.CreatedDate).IsRequired();
+
+                entity.HasOne(e => e.User)
+                    .WithMany(u => u.RefreshTokens)
+                    .HasForeignKey(e => e.UserId)
+                    .OnDelete(DeleteBehavior.Cascade);
             });
 
             OnModelCreatingPartial(modelBuilder);
