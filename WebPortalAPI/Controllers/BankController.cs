@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using WebPortalAPI.Services;
 using Microsoft.EntityFrameworkCore;
 using WebPortalAPI.Models;
+using WebPortalAPI.DTOs;
 using System.Text.Json;
 
 [ApiController]
@@ -57,7 +58,7 @@ public class BankController : ControllerBase
         if (challan.IsPaid == true)
         {
             var lastTransaction = challan.BankTransactions
-                .OrderByDescending(bt => bt.TransactionDate)
+                .OrderByDescending(bt => bt.PaidDate)
                 .FirstOrDefault();
 
             return BadRequest(new
@@ -67,9 +68,9 @@ public class BankController : ControllerBase
                 paymentDetails = new
                 {
                     challanNo = challan.ChallanNo,
-                    paidAt = lastTransaction?.TransactionDate,
+                    paidDate = lastTransaction?.PaidDate,
                     transactionId = lastTransaction?.TransactionId,
-                    bankName = lastTransaction?.BankName
+                    bankName = lastTransaction?.BranchName
                 }
             });
         }
@@ -124,7 +125,7 @@ public class BankController : ControllerBase
                     title = challan.FeeTitle.Title,
                     amount = challan.FeeAmount,
                     expiryDate = challan.FeeTitle.HasExpiry ? challan.FeeTitle.ExpiryDate : null,
-                    description = challan.FeeTitle.Description
+                    description = challan.FeeTitle.Title
                 },
                 additionalDetails = details
             }
@@ -134,27 +135,15 @@ public class BankController : ControllerBase
     /// <summary>
     /// Submits a payment for a challan
     /// </summary>
-    /// <param name="paymentDto">Payment details including challan number and branch information</param>
+    /// <param name="challanNo">The challan number to mark as paid</param>
     /// <returns>Payment confirmation details</returns>
-    [HttpPost("pay")]
-    public async Task<IActionResult> SubmitPayment([FromBody] PaymentDTO paymentDto)
+    [HttpPost("pay/{challanNo}")]
+    public async Task<IActionResult> SubmitPayment([FromRoute] string challanNo)
     {
         try
         {
-            // Validate input
-            if (string.IsNullOrWhiteSpace(paymentDto.ChallanNo) ||
-                string.IsNullOrWhiteSpace(paymentDto.BranchName) ||
-                string.IsNullOrWhiteSpace(paymentDto.BranchCode))
-            {
-                return BadRequest(new
-                {
-                    message = "All fields (challan number, branch name, and branch code) are required.",
-                    error = "INVALID_INPUT"
-                });
-            }
-
             // Parse challan number
-            if (!int.TryParse(paymentDto.ChallanNo, out int challanId))
+            if (!int.TryParse(challanNo, out int challanId))
             {
                 return BadRequest(new
                 {
@@ -202,52 +191,48 @@ public class BankController : ControllerBase
                 });
             }
 
+            // Get bank details from authenticated user
+            var bankUser = await _context.Users
+                .FirstOrDefaultAsync(u => u.Username == User.Identity.Name);
+
             // Create bank transaction
             var transaction = new BankTransaction
             {
-                ChallanNo = challanId,
+                ChallanNo = challan.ChallanNo,
                 ChallanDate = challan.GeneratedDate,
                 ChallanAmount = challan.FeeAmount,
                 FeeTitle = challan.FeeTitle.Title,
                 PaidDate = DateOnly.FromDateTime(DateTime.Now),
-                BranchName = paymentDto.BranchName,
-                BranchCode = paymentDto.BranchCode
+                BranchName = bankUser.Username,  // Using bank username as branch name
+                BranchCode = "001"  // You can modify this as needed
             };
 
-            // Update challan status
+            // Add transaction and update challan
             challan.IsPaid = true;
-
-            // Save changes
             _context.BankTransactions.Add(transaction);
             await _context.SaveChangesAsync();
 
-            // Return success response
             return Ok(new
             {
-                message = "Payment processed successfully.",
+                message = "Payment processed successfully",
                 data = new
                 {
                     transactionId = transaction.TransactionId,
                     challanNo = transaction.ChallanNo,
                     amount = transaction.ChallanAmount,
                     paidDate = transaction.PaidDate,
-                    branchInfo = new
-                    {
-                        name = transaction.BranchName,
-                        code = transaction.BranchCode
-                    },
-                    feeTitle = transaction.FeeTitle
+                    branchName = transaction.BranchName,
+                    branchCode = transaction.BranchCode
                 }
             });
         }
         catch (Exception ex)
         {
-            // Log the exception details here
             return StatusCode(500, new
             {
                 message = "An error occurred while processing the payment.",
-                error = "INTERNAL_SERVER_ERROR"
+                error = ex.Message
             });
         }
     }
-}
+} 

@@ -40,7 +40,7 @@ namespace WebPortalAPI.Controllers
                     return BadRequest("Expiry date is required when HasExpiry is true.");
                 }
 
-                if (dto.ExpiryDate.Value.Date <= DateTime.Now.Date)
+                if (dto.ExpiryDate.Value <= DateOnly.FromDateTime(DateTime.Now))
                 {
                     return BadRequest("Expiry date must be a future date.");
                 }
@@ -51,9 +51,7 @@ namespace WebPortalAPI.Controllers
                 Title = dto.Title,
                 Amount = dto.Amount,
                 HasExpiry = dto.HasExpiry,
-                ExpiryDate = dto.HasExpiry && dto.ExpiryDate.HasValue 
-                    ? DateOnly.FromDateTime(dto.ExpiryDate.Value) 
-                    : null
+                ExpiryDate = dto.HasExpiry ? dto.ExpiryDate : null
             };
 
             _context.FeeTitles.Add(feeTitle);
@@ -67,7 +65,7 @@ namespace WebPortalAPI.Controllers
                     Title = feeTitle.Title,
                     Amount = feeTitle.Amount,
                     HasExpiry = feeTitle.HasExpiry,
-                    ExpiryDate = feeTitle.ExpiryDate?.ToDateTime(TimeOnly.MinValue)
+                    ExpiryDate = feeTitle.ExpiryDate
                 }
             });
         }
@@ -83,7 +81,7 @@ namespace WebPortalAPI.Controllers
                     Title = ft.Title,
                     Amount = ft.Amount,
                     HasExpiry = ft.HasExpiry,
-                    ExpiryDate = ft.ExpiryDate?.ToDateTime(TimeOnly.MinValue)
+                    ExpiryDate = ft.ExpiryDate
                 })
                 .ToList();
 
@@ -120,7 +118,7 @@ namespace WebPortalAPI.Controllers
                     return BadRequest("Expiry date is required when HasExpiry is true.");
                 }
 
-                if (dto.ExpiryDate.Value.Date <= DateTime.Now.Date)
+                if (dto.ExpiryDate.Value <= DateOnly.FromDateTime(DateTime.Now))
                 {
                     return BadRequest("Expiry date must be a future date.");
                 }
@@ -129,9 +127,7 @@ namespace WebPortalAPI.Controllers
             feeTitle.Title = dto.Title;
             feeTitle.Amount = dto.Amount;
             feeTitle.HasExpiry = dto.HasExpiry;
-            feeTitle.ExpiryDate = dto.HasExpiry && dto.ExpiryDate.HasValue 
-                ? DateOnly.FromDateTime(dto.ExpiryDate.Value) 
-                : null;
+            feeTitle.ExpiryDate = dto.HasExpiry ? dto.ExpiryDate : null;
 
             _context.SaveChanges();
 
@@ -143,7 +139,7 @@ namespace WebPortalAPI.Controllers
                     Title = feeTitle.Title,
                     Amount = feeTitle.Amount,
                     HasExpiry = feeTitle.HasExpiry,
-                    ExpiryDate = feeTitle.ExpiryDate?.ToDateTime(TimeOnly.MinValue)
+                    ExpiryDate = feeTitle.ExpiryDate
                 }
             });
         }
@@ -167,7 +163,7 @@ namespace WebPortalAPI.Controllers
                     Title = feeTitle.Title,
                     Amount = feeTitle.Amount,
                     HasExpiry = feeTitle.HasExpiry,
-                    ExpiryDate = feeTitle.ExpiryDate?.ToDateTime(TimeOnly.MinValue)
+                    ExpiryDate = feeTitle.ExpiryDate
                 }
             });
         }

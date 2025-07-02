@@ -77,7 +77,7 @@ namespace WebPortalAPI.Controllers
             _context.SaveChanges();
 
             // Generate token
-            var token = JwtTokenGenerator.GenerateToken(user, _config["Jwt:Key"]);
+            var token = JwtTokenGenerator.GenerateTokens(user, _config["Jwt:Key"]);
 
             return Ok(new
             {
@@ -310,9 +310,10 @@ namespace WebPortalAPI.Controllers
             }
 
             // Get the latest bank transaction if paid
-            var latestTransaction = challan.BankTransactions
-                .OrderByDescending(bt => bt.TransactionDate)
-                .FirstOrDefault();
+            var transactions = await _context.BankTransactions
+                .Where(bt => bt.ChallanNo == challan.ChallanNo)
+                .OrderByDescending(bt => bt.PaidDate)
+                .ToListAsync();
 
             return Ok(new
             {
@@ -322,7 +323,7 @@ namespace WebPortalAPI.Controllers
                     challanNo = challan.ChallanNo,
                     isPaid = challan.IsPaid ?? false,
                     isExpired = challan.IsExpired ?? false,
-                    paidDate = latestTransaction?.TransactionDate,
+                    paidDate = transactions.FirstOrDefault()?.PaidDate,
                     fee = new
                     {
                         title = challan.FeeTitle.Title,

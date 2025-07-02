@@ -123,7 +123,7 @@ public class AdminController : ControllerBase
             TotalApplicants = await _context.Applicants.CountAsync(),
             TotalFeeTitles = await _context.FeeTitles.CountAsync(),
             TotalChallans = await _context.Challans.CountAsync(),
-            PaidChallans = await _context.Challans.CountAsync(c => c.IsPaid),
+            PaidChallans = await _context.Challans.CountAsync(c => c.IsPaid ?? false),
             TotalRevenue = await _context.BankTransactions.SumAsync(bt => bt.ChallanAmount),
             ActiveFeeTitles = await _context.FeeTitles.CountAsync(ft => 
                 !ft.HasExpiry || (ft.HasExpiry && ft.ExpiryDate >= DateOnly.FromDateTime(DateTime.Today)))
@@ -151,8 +151,8 @@ public class AdminController : ControllerBase
                 IsExpired = c.IsExpired ?? false,
                 ExpiryDate = c.FeeTitle.HasExpiry ? c.FeeTitle.ExpiryDate : null,
                 PaymentDate = c.BankTransactions
-                    .OrderByDescending(bt => bt.TransactionDate)
-                    .Select(bt => bt.TransactionDate)
+                    .OrderByDescending(bt => bt.PaidDate)
+                    .Select(bt => bt.PaidDate)
                     .FirstOrDefault()
             })
             .OrderByDescending(c => c.GeneratedDate)
@@ -179,7 +179,14 @@ public class AdminController : ControllerBase
         // Apply filters if provided
         if (!string.IsNullOrWhiteSpace(challanNo))
         {
-            query = query.Where(c => c.ChallanNo.ToString().Contains(challanNo));
+            if (int.TryParse(challanNo, out int challanId))
+            {
+                query = query.Where(c => c.ChallanNo == challanId);
+            }
+            else
+            {
+                return BadRequest(new { message = "Invalid challan number format" });
+            }
         }
 
         if (!string.IsNullOrWhiteSpace(applicantName))
@@ -204,8 +211,8 @@ public class AdminController : ControllerBase
                 IsExpired = c.IsExpired ?? false,
                 ExpiryDate = c.FeeTitle.HasExpiry ? c.FeeTitle.ExpiryDate : null,
                 PaymentDate = c.BankTransactions
-                    .OrderByDescending(bt => bt.TransactionDate)
-                    .Select(bt => bt.TransactionDate)
+                    .OrderByDescending(bt => bt.PaidDate)
+                    .Select(bt => bt.PaidDate)
                     .FirstOrDefault()
             })
             .OrderByDescending(c => c.GeneratedDate)
@@ -220,11 +227,16 @@ public class AdminController : ControllerBase
     [HttpGet("challans/{challanNo}")]
     public async Task<IActionResult> GetChallanDetails(string challanNo)
     {
+        if (!int.TryParse(challanNo, out int challanId))
+        {
+            return BadRequest(new { message = "Invalid challan number format" });
+        }
+
         var challan = await _context.Challans
             .Include(c => c.Applicant)
             .Include(c => c.FeeTitle)
             .Include(c => c.BankTransactions)
-            .FirstOrDefaultAsync(c => c.ChallanNo == challanNo);
+            .FirstOrDefaultAsync(c => c.ChallanNo == challanId);
 
         if (challan == null)
             return NotFound();
@@ -234,8 +246,8 @@ public class AdminController : ControllerBase
             challan.ChallanNo,
             challan.GeneratedDate,
             challan.FeeAmount,
-            challan.IsPaid,
-            challan.IsExpired,
+            IsPaid = challan.IsPaid ?? false,
+            IsExpired = challan.IsExpired ?? false,
             Applicant = new
             {
                 challan.Applicant.ApplicantId,
@@ -254,7 +266,7 @@ public class AdminController : ControllerBase
                 bt.BranchCode,
                 bt.BranchName,
                 bt.ChallanAmount,
-                bt.TransactionDate
+                bt.PaidDate
             })
         });
     }
@@ -262,11 +274,16 @@ public class AdminController : ControllerBase
     [HttpPost("challans/{challanNo}/mark-expired")]
     public async Task<IActionResult> MarkChallanAsExpired(string challanNo)
     {
-        var challan = await _context.Challans.FindAsync(challanNo);
+        if (!int.TryParse(challanNo, out int challanId))
+        {
+            return BadRequest(new { message = "Invalid challan number format" });
+        }
+
+        var challan = await _context.Challans.FindAsync(challanId);
         if (challan == null)
             return NotFound();
 
-        if (challan.IsPaid)
+        if (challan.IsPaid ?? false)
             return BadRequest("Cannot mark a paid challan as expired");
 
         challan.IsExpired = true;
@@ -285,10 +302,16 @@ public class AdminController : ControllerBase
             .AsQueryable();
 
         if (fromDate.HasValue)
-            query = query.Where(bt => bt.TransactionDate >= fromDate.Value);
-        
+        {
+            var fromDateOnly = DateOnly.FromDateTime(fromDate.Value);
+            query = query.Where(bt => bt.PaidDate >= fromDateOnly);
+        }
+
         if (toDate.HasValue)
-            query = query.Where(bt => bt.TransactionDate <= toDate.Value);
+        {
+            var toDateOnly = DateOnly.FromDateTime(toDate.Value);
+            query = query.Where(bt => bt.PaidDate <= toDateOnly);
+        }
 
         var transactions = await query
             .Select(bt => new
@@ -298,14 +321,14 @@ public class AdminController : ControllerBase
                 bt.BranchCode,
                 bt.BranchName,
                 bt.ChallanAmount,
-                bt.TransactionDate,
+                bt.PaidDate,
                 Applicant = new
                 {
                     bt.ChallanNoNavigation.Applicant.FullName,
                     bt.ChallanNoNavigation.Applicant.Cnic
                 }
             })
-            .OrderByDescending(bt => bt.TransactionDate)
+            .OrderByDescending(bt => bt.PaidDate)
             .ToListAsync();
 
         return Ok(transactions);

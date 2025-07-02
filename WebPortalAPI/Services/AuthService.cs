@@ -28,22 +28,22 @@ namespace WebPortalAPI.Services
                 throw new Exception("Invalid username or password");
             }
 
-            var tokens = JwtTokenGenerator.GenerateTokens(user, _jwtKey);
+            var token = JwtTokenGenerator.GenerateTokens(user, _jwtKey);
 
             // Save refresh token
             var refreshToken = new RefreshToken
             {
-                Token = tokens.RefreshToken,
+                Token = token.RefreshToken,
                 ExpiryDate = DateTime.UtcNow.AddDays(7),
                 CreatedDate = DateTime.UtcNow,
                 IsRevoked = false,
-                UserId = user.Id
+                UserId = user.UserId
             };
 
             user.RefreshTokens.Add(refreshToken);
             await _context.SaveChangesAsync();
 
-            return tokens;
+            return token;
         }
 
         public async Task<TokenDTO> RefreshTokenAsync(string refreshToken)
@@ -63,7 +63,7 @@ namespace WebPortalAPI.Services
             }
 
             var user = storedToken.User;
-            var newTokens = JwtTokenGenerator.GenerateTokens(user, _jwtKey);
+            var newToken = JwtTokenGenerator.GenerateTokens(user, _jwtKey);
 
             // Revoke old refresh token
             storedToken.IsRevoked = true;
@@ -71,17 +71,17 @@ namespace WebPortalAPI.Services
             // Save new refresh token
             var newRefreshToken = new RefreshToken
             {
-                Token = newTokens.RefreshToken,
+                Token = newToken.RefreshToken,
                 ExpiryDate = DateTime.UtcNow.AddDays(7),
                 CreatedDate = DateTime.UtcNow,
                 IsRevoked = false,
-                UserId = user.Id
+                UserId = user.UserId
             };
 
             user.RefreshTokens.Add(newRefreshToken);
             await _context.SaveChangesAsync();
 
-            return newTokens;
+            return newToken;
         }
 
         public async Task RevokeRefreshTokenAsync(string refreshToken)

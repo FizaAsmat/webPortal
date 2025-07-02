@@ -13,5 +13,11 @@ public partial class Applicant
 
     public string MobileNo { get; set; } = null!;
 
+    public string? Email { get; set; }
+
+    public int? UserId { get; set; }
+
+    public virtual User? User { get; set; }
+
     public virtual ICollection<Challan> Challans { get; set; } = new List<Challan>();
 }
