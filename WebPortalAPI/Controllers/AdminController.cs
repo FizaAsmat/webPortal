@@ -114,24 +114,6 @@ public class AdminController : ControllerBase
     }
     #endregion
 
-    #region Dashboard Statistics
-    [HttpGet("dashboard/stats")]
-    public async Task<IActionResult> GetDashboardStats()
-    {
-        var stats = new
-        {
-            TotalApplicants = await _context.Applicants.CountAsync(),
-            TotalFeeTitles = await _context.FeeTitles.CountAsync(),
-            TotalChallans = await _context.Challans.CountAsync(),
-            PaidChallans = await _context.Challans.CountAsync(c => c.IsPaid ?? false),
-            TotalRevenue = await _context.BankTransactions.SumAsync(bt => bt.ChallanAmount),
-            ActiveFeeTitles = await _context.FeeTitles.CountAsync(ft => 
-                !ft.HasExpiry || (ft.HasExpiry && ft.ExpiryDate >= DateOnly.FromDateTime(DateTime.Today)))
-        };
-        return Ok(stats);
-    }
-    #endregion
-
     #region Challan Management
     [HttpGet("challans")]
     public async Task<IActionResult> GetAllChallans()

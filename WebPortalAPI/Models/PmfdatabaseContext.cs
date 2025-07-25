@@ -122,32 +122,6 @@ namespace WebPortalAPI.Models
 
                 entity.Property(e => e.Role)
                       .HasMaxLength(50);
-
-                entity.Property(e => e.IsApproved)
-                      .HasDefaultValue(false);
-
-                entity.Property(e => e.BankName)
-                      .HasMaxLength(100);
-
-                entity.Property(e => e.BranchCode)
-                      .HasMaxLength(50);
-
-                entity.Property(e => e.ContactPerson)
-                      .HasMaxLength(100);
-
-                entity.Property(e => e.ContactNumber)
-                      .HasMaxLength(20);
-
-                entity.Property(e => e.Email)
-                      .HasMaxLength(100);
-
-                entity.Property(e => e.CreatedAt)
-                      .HasDefaultValueSql("(getdate())");
-
-                entity.Property(e => e.ApprovedAt);
-
-                entity.Property(e => e.RejectionReason)
-                      .HasMaxLength(500);
             });
 
             modelBuilder.Entity<RefreshToken>(entity =>

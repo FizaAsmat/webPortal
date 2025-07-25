@@ -84,19 +84,6 @@ namespace WebPortalAPI.Controllers
                 return BadRequest("Invalid role. Role must be 'Admin', 'Bank', or 'Public'.");
             }
 
-            // Validate bank-specific fields if registering a bank user
-            if (registerDto.Role == "Bank")
-            {
-                if (string.IsNullOrWhiteSpace(registerDto.BankName) ||
-                    string.IsNullOrWhiteSpace(registerDto.BranchCode) ||
-                    string.IsNullOrWhiteSpace(registerDto.ContactPerson) ||
-                    string.IsNullOrWhiteSpace(registerDto.ContactNumber) ||
-                    string.IsNullOrWhiteSpace(registerDto.Email))
-                {
-                    return BadRequest("All bank details (name, branch code, contact person, contact number, and email) are required for bank users.");
-                }
-            }
-
             var existingUser = _context.Users.FirstOrDefault(u => u.Username == registerDto.Username);
             if (existingUser != null)
                 return Conflict("Username already exists.");
@@ -105,13 +92,7 @@ namespace WebPortalAPI.Controllers
             {
                 Username = registerDto.Username,
                 Password = registerDto.Password,
-                Role = registerDto.Role,
-                // Set bank-specific fields only for bank users
-                BankName = registerDto.Role == "Bank" ? registerDto.BankName : null,
-                BranchCode = registerDto.Role == "Bank" ? registerDto.BranchCode : null,
-                ContactPerson = registerDto.Role == "Bank" ? registerDto.ContactPerson : null,
-                ContactNumber = registerDto.Role == "Bank" ? registerDto.ContactNumber : null,
-                Email = registerDto.Role == "Bank" ? registerDto.Email : null
+                Role = registerDto.Role
             };
 
             _context.Users.Add(newUser);
@@ -123,75 +104,7 @@ namespace WebPortalAPI.Controllers
                 data = new
                 {
                     username = newUser.Username,
-                    role = newUser.Role,
-                    bankName = newUser.BankName
-                }
-            });
-        }
-
-        [HttpGet("pending-banks")]
-        [Authorize(Roles = "Admin")]
-        public IActionResult GetPendingBanks()
-        {
-            var pendingBanks = _context.Users
-                .Where(u => u.Role == "Bank" && !u.IsApproved)
-                .Select(u => new
-                {
-                    userId = u.UserId,
-                    username = u.Username,
-                    bankName = u.BankName,
-                    branchCode = u.BranchCode,
-                    contactPerson = u.ContactPerson,
-                    contactNumber = u.ContactNumber,
-                    email = u.Email,
-                    createdAt = u.CreatedAt
-                })
-                .OrderByDescending(u => u.createdAt)
-                .ToList();
-
-            return Ok(new
-            {
-                message = "Pending bank approvals retrieved successfully.",
-                data = pendingBanks
-            });
-        }
-
-        [HttpPost("approve-bank")]
-        [Authorize(Roles = "Admin")]
-        public IActionResult ApproveBankRegistration([FromBody] BankApprovalDTO approvalDto)
-        {
-            var user = _context.Users.FirstOrDefault(u => 
-                u.UserId == approvalDto.UserId && 
-                u.Role == "Bank" && 
-                !u.IsApproved);
-
-            if (user == null)
-                return NotFound("Pending bank registration not found.");
-
-            user.IsApproved = approvalDto.IsApproved;
-            if (approvalDto.IsApproved)
-            {
-                user.ApprovedAt = DateTime.UtcNow;
-                user.RejectionReason = null;
-            }
-            else
-            {
-                user.RejectionReason = approvalDto.RejectionReason;
-            }
-
-            _context.SaveChanges();
-
-            return Ok(new
-            {
-                message = approvalDto.IsApproved 
-                    ? "Bank registration approved successfully." 
-                    : "Bank registration rejected.",
-                data = new
-                {
-                    username = user.Username,
-                    bankName = user.BankName,
-                    status = approvalDto.IsApproved ? "Approved" : "Rejected",
-                    rejectionReason = user.RejectionReason
+                    role = newUser.Role
                 }
             });
         }
